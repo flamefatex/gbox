@@ -9,7 +9,7 @@ BRANCH := $(shell git branch | grep \* | cut -d ' ' -f2)
 GIT_COMMIT := $(shell git rev-parse HEAD)
 GIT_DIRTY := $(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
 GIT_COMMIT := "${GIT_COMMIT}${GIT_DIRTY}"
-VERSION := $(shell git describe)
+VERSION := $(shell git describe --tags)
 ifeq "${VERSION}" ""
 	VERSION := "notag"
 endif
