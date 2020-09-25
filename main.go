@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/flamefatex/config"
 	"github.com/flamefatex/gbox/cmd"
+	"github.com/flamefatex/gbox/service/version"
+
 	"github.com/flamefatex/log"
 )
 
@@ -26,10 +28,11 @@ func main() {
 	log.InitLogger(log.NewZapLogger, logConfig)
 
 	// version
-	log.Infof("ServiceName: %s", serviceName)
-	log.Infof("Version: %s", Version)
-	log.Infof("GitCommit: %s", GitCommit)
+	version.SetVersionInfo(&version.VersionInfo{
+		ServiceName: serviceName,
+		Version:     Version,
+		GitCommit:   GitCommit,
+	})
 
-	//
 	cmd.Execute()
 }
