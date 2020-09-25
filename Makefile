@@ -44,37 +44,46 @@ help:
 	@echo
 
 build:
-	@echo "building ${BIN_NAME} ${VERSION}"
-	go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" -o bin/${BIN_NAME}
+	@echo "building ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
+	go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" \
+		-o bin/${BIN_NAME}
 
 build-alpine:
-	@echo "building ${BIN_NAME} ${VERSION}"
-	go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" -o bin/${BIN_NAME}
+	@echo "building ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
+	go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" \
+		-o bin/${BIN_NAME}
 
 build-linux:
-	@echo "building ${BIN_NAME} ${VERSION}"
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" -o bin/${BIN_NAME}
+	@echo "building ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+		go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" \
+		-o bin/${BIN_NAME}
 
 package:
 	@echo "building image ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
 	go mod vendor
 	# 加快编译
-	docker build --build-arg APP_NAME=${BIN_NAME} --build-arg VERSION=${VERSION} --build-arg GIT_COMMIT=${GIT_COMMIT} -t ${IMAGE_NAME}:${BRANCH} .
+	docker build \
+		--build-arg APP_NAME=${BIN_NAME} \
+		--build-arg VERSION=${VERSION} \
+		--build-arg GIT_COMMIT=${GIT_COMMIT} \
+		-t ${IMAGE_NAME}:latest .
 	rm -rf vendor
 
 tag:
-	@echo "Tagging: latest ${VERSION} $(GIT_COMMIT)"
-	docker tag $(IMAGE_NAME):${VERSION} $(IMAGE_NAME):latest
+	@echo "Tagging image ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
+	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):latest
+	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):${BRANCH}
+	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):${VERSION}
 
 push: tag
-	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):latest
 	docker push $(REMOTE_DOCKER_URI):latest
-	docker tag $(IMAGE_NAME):${VERSION} $(REMOTE_DOCKER_URI):${VERSION}
+	docker push $(REMOTE_DOCKER_URI):${BRANCH}
 	docker push $(REMOTE_DOCKER_URI):${VERSION}
 
 local_run: package
 	mkdir -p /tmp/$(BIN_NAME)
-	docker run -p8084:8084 -v/tmp/$(BIN_NAME):/etc/${BIN_NAME} -it --rm $(IMAGE_NAME):${BRANCH}
+	docker run -p8084:8084 -v/tmp/$(BIN_NAME):/etc/${BIN_NAME} -it --rm $(IMAGE_NAME):latest
 
 clean:
 	@test ! -e bin/${BIN_NAME} || rm bin/${BIN_NAME}
