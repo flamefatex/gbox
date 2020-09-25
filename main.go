@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	GitCommit   string
 	Version     string
+	GitCommit   string
 	serviceName string = "gbox" // 服务名称
 )
 
@@ -26,7 +26,9 @@ func main() {
 	log.InitLogger(log.NewZapLogger, logConfig)
 
 	// version
-	log.Info("")
+	log.Infof("ServiceName: %s", serviceName)
+	log.Infof("Version: %s", Version)
+	log.Infof("GitCommit: %s", GitCommit)
 
 	//
 	cmd.Execute()

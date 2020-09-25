@@ -1,0 +1,45 @@
+image: docker:19.03.8
+
+variables:
+  # go module
+  GO111MODULE: 'on'
+  # 私有go库镜像
+  GOPROXY: https://goproxy.io
+  # 关闭校验依赖
+  GOSUMDB: 'off'
+
+stages:
+  - unittest
+  - build
+  - deploy
+
+unittest:
+  only:
+    - branches
+    - tags
+  image: golang:1.14
+  stage: unittest
+  tags:
+    - docker
+  script:
+    # 优先使用缓存的go mod cache
+    - mkdir -p gomodule && mkdir -p ${GOPATH}/pkg
+    - ls -l gomodule
+    - mv gomodule ${GOPATH}/pkg/mod
+    - mkdir coverage
+    - go test -cover -coverprofile=coverage.out -v `go list ./... | grep -v vendor`
+    - cp coverage.out coverage
+    - go tool cover -html=coverage.out -o coverage/coverage.html
+    # 下载依赖到vendor目录(避免重复下载)
+    - go mod vendor
+    # 更新缓存
+    - cp -r ${GOPATH}/pkg/mod gomodule
+  artifacts:
+    paths:
+      - coverage
+      - vendor
+  cache:
+    # 缓存go mod cache
+    key: gomodule
+    paths:
+      - gomodule
