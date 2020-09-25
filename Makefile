@@ -34,7 +34,7 @@ help:
 	@echo 'Usage:'
 	@echo '    make build           Compile the project.'
 	@echo '    make build-alpine    Compile optimized for alpine linux.'
-	@echo '    make build-linux     Compile optimized for  linux.'
+	@echo '    make build-linux     Compile optimized for linux.'
 	@echo '    make package         Build final docker image with just the go binary inside'
 	@echo '    make tag             Tag image created by package with latest, git commit and version'
 	@echo '    make test            Run tests on a compiled project.'
@@ -73,13 +73,13 @@ package:
 tag:
 	@echo "Tagging image ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
 	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):latest
-	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):${BRANCH}
-	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):${VERSION}
+#	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):${BRANCH}
+#	docker tag $(IMAGE_NAME):latest $(REMOTE_DOCKER_URI):${VERSION}
 
 push: tag
 	docker push $(REMOTE_DOCKER_URI):latest
-	docker push $(REMOTE_DOCKER_URI):${BRANCH}
-	docker push $(REMOTE_DOCKER_URI):${VERSION}
+#	docker push $(REMOTE_DOCKER_URI):${BRANCH}
+#	docker push $(REMOTE_DOCKER_URI):${VERSION}
 
 local_run: package
 	mkdir -p /tmp/$(BIN_NAME)
