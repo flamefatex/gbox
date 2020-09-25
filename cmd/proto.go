@@ -1,9 +1,8 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/flamefatex/gbox/service/proto"
+	"github.com/spf13/cobra"
 )
 
 var cmdProto = &cobra.Command{

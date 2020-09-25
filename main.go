@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/flamefatex/config"
-	"github.com/flamefatex/gbox/cmd"
-	"github.com/flamefatex/gbox/service/version"
+	"fmt"
 
+	"github.com/flamefatex/config"
 	"github.com/flamefatex/log"
+
+	"github.com/flamefatex/gbox/cmd"
 )
 
 var (
@@ -27,12 +28,9 @@ func main() {
 	}
 	log.InitLogger(log.NewZapLogger, logConfig)
 
-	// version
-	version.SetVersionInfo(&version.VersionInfo{
-		ServiceName: serviceName,
-		Version:     Version,
-		GitCommit:   GitCommit,
-	})
+	//  version
+	version := fmt.Sprintf("%s, build %s", Version, GitCommit)
 
+	cmd.RootCmd.Version = version
 	cmd.Execute()
 }

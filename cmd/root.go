@@ -7,7 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var RootCmd = &cobra.Command{Use: "gbox"}
+var RootCmd = &cobra.Command{
+	Use:     "gbox",
+	Version: "version",
+}
 
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
