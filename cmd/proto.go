@@ -5,14 +5,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cmdProto = &cobra.Command{
+var ProtoCmd = &cobra.Command{
 	Use:   "proto",
 	Short: "proto gen ",
 	Long:  "proto gen ....description",
 	Args:  cobra.MinimumNArgs(0),
-	Run:   proto.Do,
+	Run:   ProtoDo,
 }
 
+var ProtoParam = &proto.Param{}
+
 func init() {
-	RootCmd.AddCommand(cmdProto)
+	ProtoCmd.Flags().StringVarP(&ProtoParam.Src, "source", "s", "", "proto source dir")
+	RootCmd.AddCommand(ProtoCmd)
+}
+
+func ProtoDo(cmd *cobra.Command, args []string) {
+	proto.Do(cmd, args, ProtoParam)
 }

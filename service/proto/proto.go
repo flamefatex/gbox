@@ -5,7 +5,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Do(cmd *cobra.Command, args []string) {
+type Param struct {
+	Src string
+}
+
+func Do(cmd *cobra.Command, args []string, param *Param) {
 	// todo
 
 	log.Infof("dd %s", "dd")
