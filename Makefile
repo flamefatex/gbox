@@ -4,23 +4,20 @@ BIN_NAME:=$(notdir $(shell pwd))
 IMAGE_NAME := "flamefatex/${BIN_NAME}"
 REMOTE_DOCKER_URI := "flamefatex/${BIN_NAME}"
 
-# git 响应信息
+# git信息
 BRANCH := $(shell git branch | grep \* | cut -d ' ' -f2)
 GIT_COMMIT := $(shell git rev-parse HEAD)
 GIT_DIRTY := $(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
 GIT_COMMIT := "${GIT_COMMIT}${GIT_DIRTY}"
-
 VERSION := $(shell git describe)
 ifeq "${VERSION}" ""
 	VERSION := "notag"
 endif
 
-
 # GOPATH
 ifndef GOPATH
     GOPATH=$(shell go env GOPATH)
 endif
-
 ifeq "$(findstring ${GOPATH}, $(shell pwd))" "${GOPATH}"
     # Found
     IN_GOPATH=true
@@ -28,9 +25,6 @@ else
     # Not found
     IN_GOPATH=false
 endif
-
-
-
 
 default: build
 
@@ -40,6 +34,7 @@ help:
 	@echo 'Usage:'
 	@echo '    make build           Compile the project.'
 	@echo '    make build-alpine    Compile optimized for alpine linux.'
+	@echo '    make build-linux     Compile optimized for  linux.'
 	@echo '    make package         Build final docker image with just the go binary inside'
 	@echo '    make tag             Tag image created by package with latest, git commit and version'
 	@echo '    make test            Run tests on a compiled project.'
@@ -55,6 +50,10 @@ build:
 build-alpine:
 	@echo "building ${BIN_NAME} ${VERSION}"
 	go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" -o bin/${BIN_NAME}
+
+build-linux:
+	@echo "building ${BIN_NAME} ${VERSION}"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION} -X main.GitCommit=${GIT_COMMIT}" -o bin/${BIN_NAME}
 
 package:
 	@echo "building image ${BIN_NAME} ${VERSION} ${GIT_COMMIT}"
@@ -76,7 +75,6 @@ push: tag
 local_run: package
 	mkdir -p /tmp/$(BIN_NAME)
 	docker run -p8084:8084 -v/tmp/$(BIN_NAME):/etc/${BIN_NAME} -it --rm $(IMAGE_NAME):${BRANCH}
-
 
 clean:
 	@test ! -e bin/${BIN_NAME} || rm bin/${BIN_NAME}

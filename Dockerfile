@@ -12,14 +12,14 @@ RUN make build-alpine
 # Final Stage
 FROM alpine:3.12
 
-ARG GIT_COMMIT
-ARG VERSION
 ARG APP_NAME
+ARG VERSION
+ARG GIT_COMMIT
 
 LABEL REPO="flamefatex/gbox"
-LABEL GIT_COMMIT=${GIT_COMMIT}
-LABEL VERSION=${VERSION}
 LABEL APP_NAME=${APP_NAME}
+LABEL VERSION=${VERSION}
+LABEL GIT_COMMIT=${GIT_COMMIT}
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
     apk add --no-cache tcpdump lsof net-tools tzdata curl dumb-init libc6-compat
