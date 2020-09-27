@@ -1,8 +1,7 @@
-http:
-  timeout: "10s"
-
-app:
-  xxx: nothing
+proto:
+  # 依赖的proto
+  imports:
+    - "/Users/flame/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
 
 mysql:
   default:
