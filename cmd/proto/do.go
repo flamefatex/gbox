@@ -14,13 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Param struct {
-	Src         string // proto源文件目录
-	Out         string // 输出文件目录
-	PackageRoot string // proto包的根路径
-}
-
-func Do(cmd *cobra.Command, args []string, param *Param) {
+func Do(cmd *cobra.Command, args []string) {
 	// 获取所以proto文件
 	paths, err := getProtoFilePaths(param.Src)
 	if err != nil {
