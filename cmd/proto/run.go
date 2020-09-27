@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/flamefatex/config"
+	"github.com/flamefatex/gbox/pkg/md5"
 	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 )
@@ -18,21 +20,36 @@ func run(cmd *cobra.Command, args []string) {
 	// 获取所以proto文件
 	paths, err := getProtoFilePaths(param.Src)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("get proto files err:%s\n", err)
 		return
 	}
 
 	// 建临时目录
 	tmpDir, err := ioutil.TempDir("", "gbox_proto_*")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("make temp dir err:%s\n", err)
 		return
 	}
 	// 清理临时目录
 	defer os.RemoveAll(tmpDir)
 
+	// 获取
+	oldMd5Map := getMetaData()
+	newMd5Map := make(map[string]string)
+
 	wg := sync.WaitGroup{}
 	for _, p := range paths {
+		md5Str, err := md5.Md5(p)
+		if err != nil {
+			fmt.Printf("md5 file:%s,err:%s\n", p, err)
+			continue
+		}
+		newMd5Map[p] = md5Str
+		// 没有改变跳过
+		if oldMd5Str, ok := oldMd5Map[p]; ok && oldMd5Str == md5Str {
+			continue
+		}
+
 		wg.Add(1)
 		go func(p string) {
 			// 获取命令
@@ -46,17 +63,19 @@ func run(cmd *cobra.Command, args []string) {
 			// 运行
 			err = realCmd.Run()
 			if err != nil {
-				fmt.Println(err)
+				fmt.Printf("run cmd err:%s\n", err)
 			}
 			wg.Done()
 		}(p)
 	}
 	wg.Wait()
 
+	saveMetaData(newMd5Map)
+
 	// 复制
 	err = copy.Copy(tmpDir+param.PackageRoot, param.Out)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("copy err:%s\n", err)
 	}
 
 }
@@ -122,4 +141,39 @@ func getRealCmd(param *paramInfo, extra *realCmdbExtra) (realCmd *exec.Cmd) {
 	realCmd.Stdin = os.Stdin
 
 	return
+}
+
+func getMetaData() (md5Map map[string]string) {
+	// automock执行前的原始的meta文件
+	md5Map = make(map[string]string)
+
+	b, err := ioutil.ReadFile(".gbox_proto")
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Printf("ReadFile .gbox_proto err:%s\n", err)
+		return
+	}
+	if len(b) != 0 {
+		err = json.Unmarshal(b, &md5Map)
+		if err != nil {
+			fmt.Printf("json.Unmarshal .gbox_proto err:%s\n", err)
+			return
+		}
+	}
+	return
+}
+
+func saveMetaData(md5Map map[string]string) {
+	b, err := json.Marshal(md5Map)
+	if err != nil {
+		fmt.Printf("json.Marshal .gbox_proto err:%s\n", err)
+		return
+	}
+
+	err = ioutil.WriteFile(".gbox_proto", b, os.ModePerm)
+	if err != nil {
+		fmt.Printf("WriteFile .gbox_proto err:%s\n", err)
+		return
+	}
+	return
+
 }
