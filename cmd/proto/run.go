@@ -170,7 +170,7 @@ func getMetaData() (md5Map map[string]string) {
 }
 
 func saveMetaData(md5Map map[string]string) {
-	b, err := json.Marshal(md5Map)
+	b, err := json.MarshalIndent(md5Map, "", "    ")
 	if err != nil {
 		fmt.Printf("json.Marshal .gbox_proto err:%s\n", err)
 		return
