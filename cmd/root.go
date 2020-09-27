@@ -15,7 +15,7 @@ var RootCmd = &cobra.Command{
 
 func Execute() {
 	// 绑定
-	RootCmd.AddCommand(proto.ProtoCmd)
+	RootCmd.AddCommand(proto.Cmd)
 
 	// 执行
 	if err := RootCmd.Execute(); err != nil {

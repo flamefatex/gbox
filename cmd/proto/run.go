@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Do(cmd *cobra.Command, args []string) {
+func Run(cmd *cobra.Command, args []string) {
 	// 获取所以proto文件
-	paths, err := getProtoFilePaths(param.Src)
+	paths, err := getProtoFilePaths(Param.Src)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -36,7 +36,7 @@ func Do(cmd *cobra.Command, args []string) {
 		wg.Add(1)
 		go func(p string) {
 			// 获取参数
-			baseArgs := getBaseArgs(param, tmpDir)
+			baseArgs := getBaseArgs(Param, tmpDir)
 			realArgs := append(baseArgs, p)
 
 			// 执行
@@ -55,7 +55,7 @@ func Do(cmd *cobra.Command, args []string) {
 	wg.Wait()
 
 	// 复制
-	err = copy.Copy(tmpDir+param.PackageRoot, param.Out)
+	err = copy.Copy(tmpDir+Param.PackageRoot, Param.Out)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -81,7 +81,7 @@ func getProtoFilePaths(src string) (paths []string, err error) {
 	return
 }
 
-func getBaseArgs(param *Param, tmpDir string) (baseArgs []string) {
+func getBaseArgs(param *ParamInfo, tmpDir string) (baseArgs []string) {
 	// 命令example
 	//protoc -Isrc -I/usr/local/include -I$GOPATH/src \
 	//-I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway \
