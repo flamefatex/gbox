@@ -37,6 +37,8 @@ func run(cmd *cobra.Command, args []string) {
 	oldMd5Map := getMetaData()
 	newMd5Map := make(map[string]string)
 
+	hasChanged := false
+
 	wg := sync.WaitGroup{}
 	for _, p := range paths {
 		md5Str, err := md5.Md5(p)
@@ -49,6 +51,7 @@ func run(cmd *cobra.Command, args []string) {
 		if oldMd5Str, ok := oldMd5Map[p]; ok && oldMd5Str == md5Str {
 			continue
 		}
+		hasChanged = true
 
 		wg.Add(1)
 		go func(p string) {
@@ -69,6 +72,10 @@ func run(cmd *cobra.Command, args []string) {
 		}(p)
 	}
 	wg.Wait()
+
+	if !hasChanged {
+		return
+	}
 
 	saveMetaData(newMd5Map)
 
