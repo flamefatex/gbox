@@ -1,8 +1,7 @@
-package proto
+package doc
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/flamefatex/config"
-	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 )
 
@@ -22,23 +20,16 @@ func run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// 建临时目录
-	tmpDir, err := ioutil.TempDir("", "gbox_proto_*")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	// 清理临时目录
-	defer os.RemoveAll(tmpDir)
+	docOpts := getTypes(param.Type)
 
 	wg := sync.WaitGroup{}
-	for _, p := range paths {
+	for _, opt := range docOpts {
 		wg.Add(1)
-		go func(p string) {
+		go func(opt *docOpt) {
 			// 获取命令
 			extra := &realCmdbExtra{
-				tmpDir:   tmpDir,
-				filePath: p,
+				docOpt: opt,
+				paths:  paths,
 			}
 			realCmd := getRealCmd(param, extra)
 			//fmt.Println(realCmd.String())
@@ -49,15 +40,9 @@ func run(cmd *cobra.Command, args []string) {
 				fmt.Println(err)
 			}
 			wg.Done()
-		}(p)
+		}(opt)
 	}
 	wg.Wait()
-
-	// 复制
-	err = copy.Copy(tmpDir+param.PackageRoot, param.Out)
-	if err != nil {
-		fmt.Println(err)
-	}
 
 }
 
@@ -80,10 +65,44 @@ func getProtoFilePaths(src string) (paths []string, err error) {
 	return
 }
 
+// getTypes
+type docOpt struct {
+	name   string
+	suffix string
+}
+
+func getTypes(name string) []*docOpt {
+	s := []*docOpt{
+		{
+			name:   "json",
+			suffix: "json",
+		},
+		{
+			name:   "markdown",
+			suffix: "md",
+		},
+		{
+			name:   "html",
+			suffix: "html",
+		},
+	}
+	if name == "all" {
+		return s
+	}
+
+	for _, o := range s {
+		if o.name == name {
+			return []*docOpt{o}
+		}
+	}
+
+	return nil
+}
+
 // 命令所需额外信息
 type realCmdbExtra struct {
-	tmpDir   string // 临时目录路径
-	filePath string // proto文件路径
+	docOpt *docOpt
+	paths  []string
 }
 
 // getRealCmd 获取实际运行的命令
@@ -92,29 +111,20 @@ func getRealCmd(param *paramInfo, extra *realCmdbExtra) (realCmd *exec.Cmd) {
 	//protoc -Isrc -I/usr/local/include -I$GOPATH/src \
 	//-I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway \
 	//-I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-	//--go_out=plugins=grpc:/tmp/protos \
-	//--govalidators_out=/tmp/protos \
-	//--grpc-gateway_out=logtostderr=true:/tmp/protos \
-	//$f
+	//--doc_out=./doc --doc_opt=markdown,doc.md src/*/*.proto src/*/*/*.proto src/*/*/*/*.proto
 	realArgs := []string{
 		fmt.Sprintf("-I%s", param.Src),
-		//fmt.Sprintf("-I%s", "/usr/local/include"),
-		//fmt.Sprintf("-I%s", "/Users/flame/go/src"),
-		//fmt.Sprintf("-I%s", "/Users/flame/go/src/github.com/grpc-ecosystem/grpc-gateway"),
-		//fmt.Sprintf("-I%s", "/Users/flame/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"),
-
 	}
 	imports := config.Config().GetStringSlice("proto.imports")
 	for _, ipt := range imports {
 		realArgs = append(realArgs, fmt.Sprintf("-I%s", ipt))
 	}
 	plugins := []string{
-		fmt.Sprintf("--go_out=plugins=grpc:%s", extra.tmpDir),
-		fmt.Sprintf("--grpc-gateway_out=logtostderr=true:%s", extra.tmpDir),
-		fmt.Sprintf("--govalidators_out=%s", extra.tmpDir),
+		fmt.Sprintf("--doc_out=%s", param.Out),
+		fmt.Sprintf("--doc_opt=%s,doc.%s", extra.docOpt.name, extra.docOpt.suffix),
 	}
 	realArgs = append(realArgs, plugins...)
-	realArgs = append(realArgs, extra.filePath)
+	realArgs = append(realArgs, extra.paths...)
 
 	realCmd = exec.Command("protoc", realArgs...)
 	realCmd.Stdout = os.Stdout
