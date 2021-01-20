@@ -96,7 +96,6 @@ update-cookiecutter:
 	cp /tmp/cookiecutter/$(BIN_NAME)/Makefile . | true
 	cp /tmp/cookiecutter/$(BIN_NAME)/Dockerfile . | true
 	cp /tmp/cookiecutter/$(BIN_NAME)/.gitlab-ci.yml . | true
-	cp /tmp/cookiecutter/$(BIN_NAME)/app.properties . | true
 	rm -rf /tmp/cookiecutter
 
 test:
